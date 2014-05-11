@@ -35,21 +35,21 @@ public class Main extends JavaPlugin{
             public void run() {
                 for (String s : SonarList) {
                     //todo: apply effects(slowness & blindness).
-                    Player p = Bukkit.getPlayer(s);
+                    Player p;
+                    try {p = Bukkit.getPlayer(s);} catch (NullPointerException e) {SonarList.remove(s); continue;}
 
                     for (Entity entity : p.getNearbyEntities(SearchDistance, SearchDistance, SearchDistance))
-
-                        if ((entity instanceof LivingEntity) )
-                               p.playEffect(
-                                       rescale(
-                                               p.getEyeLocation(),
-                                               entity.getLocation(),
-                                               SearchDistance,
-                                               ViewDistance
-                                       ),
-                                       Effect.MOBSPAWNER_FLAMES,
-                                       2
-                               );
+                        if (entity instanceof LivingEntity)
+                            p.playEffect(
+                                    rescale(
+                                            p.getEyeLocation(),
+                                            entity.getLocation(),
+                                            SearchDistance,
+                                            ViewDistance
+                                    ),
+                                    Effect.MOBSPAWNER_FLAMES,
+                                    1
+                            );
                 }
             }
         }, 1, Refresh);
@@ -131,9 +131,9 @@ public class Main extends JavaPlugin{
             distanceZ = center.getZ() - point.getZ(),
             SizeScale = initialSize/newSize,
 
-            newX = center.getX() + (distanceX / SizeScale),
-            newY = center.getY() + (distanceY / SizeScale),
-            newZ = center.getZ() + (distanceZ / SizeScale)
+            newX = center.getX() - (distanceX / SizeScale),
+            newY = center.getY() - (distanceY / SizeScale),
+            newZ = center.getZ() - (distanceZ / SizeScale)
         ;
         return new Location(center.getWorld(), newX, newY, newZ);
     }
