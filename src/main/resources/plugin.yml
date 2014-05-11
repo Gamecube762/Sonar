@@ -1,0 +1,15 @@
+name: Sonar
+main: com.github.Gamecube762.Sonar.Main
+author: Gamecube762
+version: 0.0.1
+prefix: Sonar
+commands:
+   Sonar:
+      description: Sonar command
+      usage: /<command>
+      permission: Sonar.command
+      permission-message: You don't have <permission>
+permissions:
+   Sonar.command:
+      description: command
+      default: true
