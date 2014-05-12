@@ -1,5 +1,7 @@
 package com.github.Gamecube762.Sonar;
 
+import java.util.ArrayList;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -9,8 +11,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.ArrayList;
+import org.bukkit.util.Vector;
 
 /**
  * Created by Gamecube762 on 5/11/14.
@@ -42,7 +43,7 @@ public class Main extends JavaPlugin {
 					
 					for (Entity entity : p.getNearbyEntities(searchDistance, searchDistance, searchDistance))
 						if (entity instanceof LivingEntity)
-							p.playEffect(rescale(p.getEyeLocation(), entity.getLocation(), searchDistance, viewDistance), Effect.MOBSPAWNER_FLAMES, 1);
+							p.playEffect(newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance), Effect.MOBSPAWNER_FLAMES, 1);
 				}
 			}
 		}, 1, refresh);
@@ -135,5 +136,14 @@ public class Main extends JavaPlugin {
 		double newZ = center.getZ() - (distanceZ / SizeScale);
 		
 		return new Location(center.getWorld(), newX, newY, newZ);
+	}
+	
+	public Location newRescale(Location head, Location entity, double viewDistance) {
+		Vector difference = entity.subtract(head).toVector();
+		difference.normalize().multiply(viewDistance);
+		
+		Location particle = head.clone().add(difference);
+		
+		return particle;
 	}
 }
