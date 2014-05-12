@@ -4,12 +4,18 @@ author: Gamecube762
 version: 0.0.1
 prefix: Sonar
 commands:
-   Sonar:
+   sonar:
       description: Sonar command
       usage: /<command>
-      permission: Sonar.command
+      permission: sonar.command
       permission-message: You don't have <permission>
 permissions:
-   Sonar.command:
+   sonar.command:
       description: command
       default: true
+   sonar.noDarkness:
+      description: Note Effect
+      default: false
+   sonar.note:
+      description: Note Effect
+      default: false

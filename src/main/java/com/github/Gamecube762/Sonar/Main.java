@@ -1,9 +1,9 @@
 package com.github.Gamecube762.Sonar;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -40,7 +40,6 @@ public class Main extends JavaPlugin {
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
 				for (String s : SonarList) {
-					//todo: apply effects(slowness & blindness).
 					Player p;
 					try {
 						p = Bukkit.getPlayer(s);
@@ -48,16 +47,18 @@ public class Main extends JavaPlugin {
 						SonarList.remove(s);
 						continue;
 					}
-					
-					p.removePotionEffect(PotionEffectType.BLINDNESS);
-					p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
-					
-					p.removePotionEffect(PotionEffectType.SLOW);
-					p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 0));
+
+                    if (!p.hasPermission("sonar.noDarkness")) {
+                        p.removePotionEffect(PotionEffectType.BLINDNESS);
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
+
+                        p.removePotionEffect(PotionEffectType.SLOW);
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 0));
+                    }
 					
 					for (Entity entity : p.getNearbyEntities(searchDistance, searchDistance, searchDistance))
 						if (entity instanceof LivingEntity)
-							ParticleEffect.FLAME.display(newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance), 0, 0, 0, 0, 1);
+                            showEffect(p, newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance));
 				}
 			}
 		}, 1, refresh);
@@ -111,12 +112,11 @@ public class Main extends JavaPlugin {
 	public boolean isUsingSonar(Player player) {
 		return SonarList.contains(player.getName());
 	}
-	
-	@Deprecated
-	//Was just a test
-	protected void createFlame(Location location) {
-		location.getWorld().playEffect(location, Effect.MOBSPAWNER_FLAMES, 2);
-	}
+
+    protected void showEffect(Player player, Location location){//Possible TODO: add more particles
+        if (player.hasPermission("sonar.note")) ParticleEffect.NOTE.display(location, 0, 0, 0, new Random().nextInt(23) + 1, 1);
+        else ParticleEffect.FLAME.display(location, 0, 0, 0, 0, 1);
+    }
 	
 	/*
 	* center ~ Center location of circle(where sonar was activated)
