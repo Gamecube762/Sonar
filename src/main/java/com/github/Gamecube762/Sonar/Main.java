@@ -20,16 +20,20 @@ import com.darkblade12.particleeffect.ParticleEffect;
  */
 public class Main extends JavaPlugin {
 	
-	int refresh = 3 * 20;//3 seconds
-	double searchDistance = 30, viewDistance = 3;
+	int refresh;//3 seconds
+	double searchDistance, viewDistance;
 	
 	//static to help with /reloading
 	protected static ArrayList<String> SonarList = new ArrayList<String>();
 	
 	@Override
 	public void onEnable() {
+		saveDefaultConfig();
+		getConfig().options().copyDefaults(true);		
 		
-		//Todo: config to load Refresh, SearchDistance, & ViewDistance.
+		refresh = getConfig().getInt("refreshRate");
+		searchDistance = getConfig().getDouble("searchDistance");
+		viewDistance = getConfig().getDouble("viewDistance");
 		
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
