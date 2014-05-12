@@ -11,6 +11,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import com.darkblade12.particleeffect.ParticleEffect;
@@ -46,6 +48,12 @@ public class Main extends JavaPlugin {
 						SonarList.remove(s);
 						continue;
 					}
+					
+					p.removePotionEffect(PotionEffectType.BLINDNESS);
+					p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
+					
+					p.removePotionEffect(PotionEffectType.SLOW);
+					p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 0));
 					
 					for (Entity entity : p.getNearbyEntities(searchDistance, searchDistance, searchDistance))
 						if (entity instanceof LivingEntity)
