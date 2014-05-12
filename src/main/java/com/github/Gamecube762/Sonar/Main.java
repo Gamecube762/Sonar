@@ -13,6 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
+import com.darkblade12.particleeffect.ParticleEffect;
+
 /**
  * Created by Gamecube762 on 5/11/14.
  */
@@ -43,7 +45,7 @@ public class Main extends JavaPlugin {
 					
 					for (Entity entity : p.getNearbyEntities(searchDistance, searchDistance, searchDistance))
 						if (entity instanceof LivingEntity)
-							p.playEffect(newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance), Effect.MOBSPAWNER_FLAMES, 1);
+							ParticleEffect.FLAME.display(newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance), 0, 0, 0, 0, 1);
 				}
 			}
 		}, 1, refresh);
