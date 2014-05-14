@@ -8,10 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -65,12 +62,15 @@ public class Main extends JavaPlugin implements Listener {
                         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
 
                         p.removePotionEffect(PotionEffectType.SLOW);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 0));
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 2));
                     }
 					
 					for (Entity entity : p.getNearbyEntities(searchDistance, searchDistance, searchDistance))
 						if (entity instanceof LivingEntity)
-                            showEffect(p, newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance));
+                            if (a)
+                                showEffect(p, newRescale(p.getEyeLocation(), entity.getLocation(), viewDistance));
+                            else
+                                showEffect(p, rescale(p.getEyeLocation(), entity.getLocation(), searchDistance, viewDistance));
 				}
 			}
 		}, 1, refresh);
@@ -88,32 +88,26 @@ public class Main extends JavaPlugin implements Listener {
 			sonarOff(damagedPlayer);
 		}
 	}
+
+    private boolean a = true;
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		try {
-			
-			try {
-				if (args[0].equalsIgnoreCase("on"))
-					sonarOn(((Player) sender));
-				else if (args[0].equalsIgnoreCase("off"))
-					sonarOff(((Player) sender));
-				else
-					sender.sendMessage("Unknown Argument!");
-				
-				return true;
-			} catch (ArrayIndexOutOfBoundsException e) {
-			}
-			
-			Player player = ((Player) sender);
-			
-			if (isUsingSonar(player))
-				sonarOff(player);
-			else
-				sonarOn(player);
-			
-		} catch (ClassCastException e) {
-			sender.sendMessage("Needs to be a player!");
-		}
+        try {
+
+            try {
+                if (args[0].equalsIgnoreCase("on"))       sonarOn(((Player) sender));
+                else if (args[0].equalsIgnoreCase("off")) sonarOff(((Player) sender));
+                else if (args[0].equalsIgnoreCase("m"))   a = !a;
+                else if (args[0].equalsIgnoreCase("a"))   sender.sendMessage("" + a);
+                else sender.sendMessage("Unknown Argument!");
+                return true;
+            } catch (ArrayIndexOutOfBoundsException e) {}
+
+            toggleSonar((Player) sender);
+
+        } catch (ClassCastException e) {
+            sender.sendMessage("Needs to be a player!");
+        }
 		
 		return true;
 	}
@@ -132,9 +126,18 @@ public class Main extends JavaPlugin implements Listener {
 		return SonarList.contains(player.getName());
 	}
 
+    public void toggleSonar(Player player) {
+        if (isUsingSonar(player))
+            sonarOff(player);
+        else
+            sonarOn(player);
+    }
+
     protected void showEffect(Player player, Location location){//Possible TODO: add more particles
-        if (player.hasPermission("sonar.note")) ParticleEffect.NOTE.display(location, 0, 0, 0, new Random().nextInt(23) + 1, 1);
-        else ParticleEffect.FLAME.display(location, 0, 0, 0, 0, 1);
+
+        if(player.hasPermission("sonar.note")) ParticleEffect.NOTE.display(location, (float)0, (float)0, (float)0, (float)new Random().nextInt(23) + 1, 1, player);
+        else ParticleEffect.FLAME.display(location, (float)0, (float)0, (float)0, (float)0, 1, player);
+
     }
     
     public void showWarningParticles(Player player, int amount, double distance) {
@@ -145,7 +148,7 @@ public class Main extends JavaPlugin implements Listener {
     		vec.add(player.getEyeLocation().toVector());
     		
     		Location loc = new Location(player.getWorld(), vec.getX(), vec.getY(), vec.getZ());
-    		ParticleEffect.RED_DUST.display(loc, 0, 0, 0, 0, 1);
+    		ParticleEffect.RED_DUST.display(loc, (float)0, (float)0, (float)0, (float)0, 1, player);
     	}
     }
     
@@ -158,6 +161,8 @@ public class Main extends JavaPlugin implements Listener {
     }
     
     public boolean isMonster(Entity entity) {
+        return (entity instanceof Monster);//Should be cleaner and work with new monsters in future updates.
+        /*
     	List<EntityType> hostileEntities = new ArrayList<EntityType>();
     	hostileEntities.add(EntityType.BLAZE);
     	hostileEntities.add(EntityType.CAVE_SPIDER);
@@ -179,7 +184,7 @@ public class Main extends JavaPlugin implements Listener {
     	if (hostileEntities.contains(entity.getType()))
     		return true;
     	
-    	return false;
+    	return false;*/
     }
 	
 	/*
@@ -203,6 +208,7 @@ public class Main extends JavaPlugin implements Listener {
 	*  20 / 10 = 2
 	*  0 + 2 = 2
 	*/
+    @Deprecated
 	public Location rescale(Location center, Location point, Double initialSize, Double newSize) {
 		double distanceX = center.getX() - point.getX();
 		double distanceY = center.getY() - point.getY();
@@ -224,4 +230,5 @@ public class Main extends JavaPlugin implements Listener {
 		
 		return particle;
 	}
+
 }
