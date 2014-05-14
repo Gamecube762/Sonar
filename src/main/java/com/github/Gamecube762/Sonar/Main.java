@@ -1,6 +1,7 @@
 package com.github.Gamecube762.Sonar;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
@@ -8,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,8 +27,8 @@ import com.darkblade12.particleeffect.ParticleEffect;
  */
 public class Main extends JavaPlugin implements Listener {
 	
-	int refresh;//3 seconds
-	double searchDistance, viewDistance;
+	int refresh, warningParticleAmount;
+	double searchDistance, viewDistance, warningDistance;
 	
 	//static to help with /reloading
 	protected static ArrayList<String> SonarList = new ArrayList<String>();
@@ -39,6 +41,8 @@ public class Main extends JavaPlugin implements Listener {
 		refresh = getConfig().getInt("refreshRate");
 		searchDistance = getConfig().getDouble("searchDistance");
 		viewDistance = getConfig().getDouble("viewDistance");
+		warningDistance = getConfig().getDouble("warningDistance");
+		warningParticleAmount = getConfig().getInt("warningParticleAmount");
 		
 		getServer().getPluginManager().registerEvents(this, this);
 		
@@ -52,7 +56,10 @@ public class Main extends JavaPlugin implements Listener {
 						SonarList.remove(s);
 						continue;
 					}
-
+					
+					if (areMonstersNearby(p, warningDistance))
+						showWarningParticles(p, warningParticleAmount, viewDistance);
+					
                     if (!p.hasPermission("sonar.noDarkness")) {
                         p.removePotionEffect(PotionEffectType.BLINDNESS);
                         p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
@@ -128,6 +135,51 @@ public class Main extends JavaPlugin implements Listener {
     protected void showEffect(Player player, Location location){//Possible TODO: add more particles
         if (player.hasPermission("sonar.note")) ParticleEffect.NOTE.display(location, 0, 0, 0, new Random().nextInt(23) + 1, 1);
         else ParticleEffect.FLAME.display(location, 0, 0, 0, 0, 1);
+    }
+    
+    public void showWarningParticles(Player player, int amount, double distance) {
+    	for (int i = 0; i < amount; i++) {
+    		Vector vec = new Vector(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5); //-0.5 because otherwise we only get vectors with positive coords
+    		vec.normalize();
+    		vec.multiply(distance);
+    		vec.add(player.getEyeLocation().toVector());
+    		
+    		Location loc = new Location(player.getWorld(), vec.getX(), vec.getY(), vec.getZ());
+    		ParticleEffect.RED_DUST.display(loc, 0, 0, 0, 0, 1);
+    	}
+    }
+    
+    public boolean areMonstersNearby(Player player, double radius) {
+    	for (Entity entity : player.getNearbyEntities(radius, radius, radius))
+    		if (isMonster(entity))
+    			return true;
+    	
+    	return false;
+    }
+    
+    public boolean isMonster(Entity entity) {
+    	List<EntityType> hostileEntities = new ArrayList<EntityType>();
+    	hostileEntities.add(EntityType.BLAZE);
+    	hostileEntities.add(EntityType.CAVE_SPIDER);
+    	hostileEntities.add(EntityType.CREEPER);
+    	hostileEntities.add(EntityType.ENDER_DRAGON);
+    	hostileEntities.add(EntityType.ENDERMAN);
+    	hostileEntities.add(EntityType.GHAST);
+    	hostileEntities.add(EntityType.GIANT);
+    	hostileEntities.add(EntityType.MAGMA_CUBE);
+    	hostileEntities.add(EntityType.PIG_ZOMBIE);
+    	hostileEntities.add(EntityType.SILVERFISH);
+    	hostileEntities.add(EntityType.SKELETON);
+    	hostileEntities.add(EntityType.SLIME);
+    	hostileEntities.add(EntityType.SPIDER);
+    	hostileEntities.add(EntityType.WITCH);
+    	hostileEntities.add(EntityType.WITHER);
+    	hostileEntities.add(EntityType.ZOMBIE);
+    	
+    	if (hostileEntities.contains(entity.getType()))
+    		return true;
+    	
+    	return false;
     }
 	
 	/*
