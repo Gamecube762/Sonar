@@ -10,6 +10,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -20,7 +23,7 @@ import com.darkblade12.particleeffect.ParticleEffect;
 /**
  * Created by Gamecube762 on 5/11/14.
  */
-public class Main extends JavaPlugin {
+public class Main extends JavaPlugin implements Listener {
 	
 	int refresh;//3 seconds
 	double searchDistance, viewDistance;
@@ -36,6 +39,8 @@ public class Main extends JavaPlugin {
 		refresh = getConfig().getInt("refreshRate");
 		searchDistance = getConfig().getDouble("searchDistance");
 		viewDistance = getConfig().getDouble("viewDistance");
+		
+		getServer().getPluginManager().registerEvents(this, this);
 		
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
@@ -62,12 +67,19 @@ public class Main extends JavaPlugin {
 				}
 			}
 		}, 1, refresh);
-		
 	}
 	
 	@Override
 	public void onDisable() {
 		Bukkit.getScheduler().cancelTasks(this);
+	}
+	
+	@EventHandler
+	public void onDamage(EntityDamageEvent event) {
+		if(event.getEntity() instanceof Player) {
+			Player damagedPlayer = (Player) event.getEntity();
+			sonarOff(damagedPlayer);
+		}
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
