@@ -32,7 +32,7 @@ public class Main extends JavaPlugin implements Listener {
 	double searchDistance, viewDistance, warningDistance;
 	
 	//static to help with /reloading
-	protected static ArrayList<String> SonarList = new ArrayList<String>();
+	protected ArrayList<String> SonarList = new ArrayList<String>();
 	
 	@Override
 	public void onEnable() {
@@ -50,13 +50,11 @@ public class Main extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
 				for (String s : SonarList) {
-					Player player;
-					try {
-						player = Bukkit.getPlayer(s);
-					} catch (NullPointerException e) {
-						SonarList.remove(s);
-						continue;
-					}
+					Player player= Bukkit.getPlayer(s);
+                    if (player == null) {
+                        SonarList.remove(s);
+                        continue;
+                    }
 					
 					if (areMonstersNearby(player, warningDistance))
 						showWarningParticles(player, warningParticleAmount, viewDistance);
@@ -142,7 +140,17 @@ public class Main extends JavaPlugin implements Listener {
             sonarOn(player);
     }
 
-    protected void showEffect(Player player, Flame flame){//Switch is for custom options per effect, most effects will work on default
+    public ArrayList<String> getPlayersUsingSonar() {
+        return SonarList;
+    }
+
+    public static ParticleEffect getPlayerParticleEffect(Player player) {
+        if (player.hasPermission("sonar.note")) return ParticleEffect.NOTE;
+
+        return ParticleEffect.FLAME;
+    }
+
+    protected static void showEffect(Player player, Flame flame){//Switch is for custom options per effect, most effects will work on default
 
         switch (flame.getParticleEffect()) {
             case NOTE:
@@ -156,7 +164,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     //Posible idea: make amount based on distance of closest monster
-    public void showWarningParticles(Player player, int amount, double distance) {
+    public static void showWarningParticles(Player player, int amount, double distance) {
     	for (int i = 0; i < amount; i++) {
     		Vector vec = new Vector(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5); //-0.5 because otherwise we only get vectors with positive coords
     		vec.normalize();
@@ -167,8 +175,8 @@ public class Main extends JavaPlugin implements Listener {
     		ParticleEffect.RED_DUST.display(loc, (float)0, (float)0, (float)0, (float)0, 1, player);
     	}
     }
-    
-    public boolean areMonstersNearby(Player player, double radius) {
+
+    public static boolean areMonstersNearby(Player player, double radius) {
     	for (Entity entity : player.getNearbyEntities(radius, radius, radius))
     		if (isMonster(entity))
     			return true;
@@ -176,7 +184,7 @@ public class Main extends JavaPlugin implements Listener {
     	return false;
     }
     
-    public boolean isMonster(Entity entity) {        
+    public static boolean isMonster(Entity entity) {
         List<EntityType> hostileEntities = new ArrayList<EntityType>();
     	hostileEntities.add(EntityType.GHAST);
     	hostileEntities.add(EntityType.MAGMA_CUBE);
@@ -189,7 +197,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     @Deprecated
-	public Location rescale(Location center, Location point, Double initialSize, Double newSize) {
+	public static Location rescale(Location center, Location point, Double initialSize, Double newSize) {
 		double distanceX = center.getX() - point.getX();
 		double distanceY = center.getY() - point.getY();
 		double distanceZ = center.getZ() - point.getZ();
@@ -202,7 +210,7 @@ public class Main extends JavaPlugin implements Listener {
 		return new Location(center.getWorld(), newX, newY, newZ);
 	}
 	
-	public Location newRescale(Location head, Location entity, double viewDistance) {
+	public static Location newRescale(Location head, Location entity, double viewDistance) {
 		Vector difference = entity.subtract(head).toVector();
 		difference.normalize().multiply(viewDistance);
 		
