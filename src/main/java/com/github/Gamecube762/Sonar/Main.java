@@ -1,13 +1,18 @@
 package com.github.Gamecube762.Sonar;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -171,8 +176,16 @@ public class Main extends JavaPlugin implements Listener {
     	return false;
     }
     
-    public boolean isMonster(Entity entity) {
-        return (entity instanceof Monster);//Should be cleaner and work with new monsters in future updates.
+    public boolean isMonster(Entity entity) {        
+        List<EntityType> hostileEntities = new ArrayList<EntityType>();
+    	hostileEntities.add(EntityType.GHAST);
+    	hostileEntities.add(EntityType.MAGMA_CUBE);
+    	hostileEntities.add(EntityType.SLIME); //These entities don't extend Monster so we have to check for them manually
+    	
+    	if (hostileEntities.contains(entity.getType()))
+    		return true;
+    	
+    	return (entity instanceof Monster);//Should be cleaner and work with new monsters in future updates.
     }
 
     @Deprecated
