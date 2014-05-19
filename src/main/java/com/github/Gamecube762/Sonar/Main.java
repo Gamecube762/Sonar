@@ -30,8 +30,7 @@ public class Main extends JavaPlugin implements Listener {
 	
 	int refresh, warningParticleAmount;
 	double searchDistance, viewDistance, warningDistance;
-	
-	//static to help with /reloading
+
 	protected ArrayList<String> SonarList = new ArrayList<String>();
 	
 	@Override
@@ -50,13 +49,13 @@ public class Main extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
 				for (String s : SonarList) {
-					Player player= Bukkit.getPlayer(s);
+					Player player = Bukkit.getPlayer(s);
                     if (player == null) {
                         SonarList.remove(s);
                         continue;
                     }
 					
-					if (areMonstersNearby(player, warningDistance))
+					if (Utils.areMonstersNearby(player, warningDistance))
 						showWarningParticles(player, warningParticleAmount, viewDistance);
 					
                     if (!player.hasPermission("sonar.noDarkness")) {
@@ -68,16 +67,18 @@ public class Main extends JavaPlugin implements Listener {
                     }
 					
 					for (Entity entity : player.getNearbyEntities(searchDistance, searchDistance, searchDistance))
-						if (entity instanceof LivingEntity)
-                            showEffect(
-                                    player,         //leave as is till I can clean this up ~ Gamecube762
-                                    new Flame(      // a = debug between which math method - Planning to go with newRescale
-                                            entity,
-                                            (a) ? newRescale(player.getEyeLocation(), entity.getLocation(), viewDistance) : rescale(player.getEyeLocation(), entity.getLocation(), searchDistance, viewDistance),
-                                            (player.hasPermission("sonar.note")) ? ParticleEffect.NOTE : ParticleEffect.FLAME
-                                    )       //if player has note permission: ParticleEffect.Note else Effect.Flame
-                            )
-                        ;
+						if (entity instanceof LivingEntity) {
+
+                            Location dl = (d) ? Utils.getEntityCenter((LivingEntity)entity) : entity.getLocation();
+
+                            Location location = (a) ? newRescale(player.getEyeLocation(), dl, viewDistance) : rescale(player.getEyeLocation(), dl, searchDistance, viewDistance);
+                            ParticleEffect particleEffect = (player.hasPermission("sonar.note")) ? ParticleEffect.NOTE : ParticleEffect.FLAME;
+
+                            if (b)//this method cant be compressed like above since showEffect() doesn't return anything
+                                showEffect(player, location, particleEffect);
+                            else
+                                showEffect(player, new Flame(entity, location, particleEffect) );
+                        }
 				}
 			}
 		}, 1, refresh);
@@ -96,8 +97,11 @@ public class Main extends JavaPlugin implements Listener {
 		}
 	}
 
-    private boolean a = true;// a = Math Method Toggle | default newRescale
-	
+    private boolean
+            a = true,// a = Math Method Toggle | default newRescale
+            b = true,// b = between using new flame class or skipping
+            c = true,// c = Use if methods or switch methods for showEffect()
+	        d = true;// d = try to center the flame on entity(if not, flame appears at the feet)
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         try {
 
@@ -106,6 +110,12 @@ public class Main extends JavaPlugin implements Listener {
                 else if (args[0].equalsIgnoreCase("off")) sonarOff(((Player) sender));
                 else if (args[0].equalsIgnoreCase("a"))   sender.sendMessage("" + a);
                 else if (args[0].equalsIgnoreCase("as"))  a = !a;
+                else if (args[0].equalsIgnoreCase("b"))   sender.sendMessage("" + b);
+                else if (args[0].equalsIgnoreCase("bs"))  b = !b;
+                else if (args[0].equalsIgnoreCase("c"))   sender.sendMessage("" + c);
+                else if (args[0].equalsIgnoreCase("cs"))  c = !c;
+                else if (args[0].equalsIgnoreCase("d"))   sender.sendMessage("" + d);
+                else if (args[0].equalsIgnoreCase("ds"))  d = !d;
                 else sender.sendMessage("Unknown Argument!");
                 return true;
             } catch (ArrayIndexOutOfBoundsException e) {}
@@ -150,15 +160,24 @@ public class Main extends JavaPlugin implements Listener {
         return ParticleEffect.FLAME;
     }
 
-    protected static void showEffect(Player player, Flame flame){//Switch is for custom options per effect, most effects will work on default
+    protected /*static*/ void showEffect(Player player, Flame flame){
+        showEffect(player, flame.getLocation(), flame.getParticleEffect());
+    }
+              //static temp disabled due to it using boolean c for testing
+    protected /*static*/ void showEffect(Player player, Location loc, ParticleEffect particleEffect){//Switch is for custom options per effect, most effects will work on default
 
-        switch (flame.getParticleEffect()) {
-            case NOTE:
-                flame.getParticleEffect().display(flame.getLocation(), (float) 0, (float) 0, (float) 0, (float) new Random().nextInt(23) + 1, 1, player);
-                break;
-            default:
-                flame.getParticleEffect().display(flame.getLocation(), (float) 0, (float) 0, (float) 0, (float) 0, 1, player);
-                break;
+        if (c) {
+            if (particleEffect == ParticleEffect.NOTE) particleEffect.display(loc, (float) 0, (float) 0, (float) 0, (float) new Random().nextInt(23) + 1, 1, player);
+            else particleEffect.display(loc, (float) 0, (float) 0, (float) 0, (float) 0, 1, player);
+        } else {
+            switch (particleEffect) {
+                case NOTE:
+                    particleEffect.display(loc, (float) 0, (float) 0, (float) 0, (float) new Random().nextInt(23) + 1, 1, player);
+                    break;
+                default:
+                    particleEffect.display(loc, (float) 0, (float) 0, (float) 0, (float) 0, 1, player);
+                    break;
+            }
         }
 
     }
@@ -176,6 +195,7 @@ public class Main extends JavaPlugin implements Listener {
     	}
     }
 
+    @Deprecated //Moving to Utils.java
     public static boolean areMonstersNearby(Player player, double radius) {
     	for (Entity entity : player.getNearbyEntities(radius, radius, radius))
     		if (isMonster(entity))
@@ -183,7 +203,8 @@ public class Main extends JavaPlugin implements Listener {
     	
     	return false;
     }
-    
+
+    @Deprecated //Moving to Utils.java
     public static boolean isMonster(Entity entity) {
         List<EntityType> hostileEntities = new ArrayList<EntityType>();
     	hostileEntities.add(EntityType.GHAST);
@@ -196,7 +217,7 @@ public class Main extends JavaPlugin implements Listener {
     	return (entity instanceof Monster);//Should be cleaner and work with new monsters in future updates.
     }
 
-    @Deprecated
+    @Deprecated //Being removed
 	public static Location rescale(Location center, Location point, Double initialSize, Double newSize) {
 		double distanceX = center.getX() - point.getX();
 		double distanceY = center.getY() - point.getY();
@@ -209,7 +230,8 @@ public class Main extends JavaPlugin implements Listener {
 		
 		return new Location(center.getWorld(), newX, newY, newZ);
 	}
-	
+
+    @Deprecated //Moving to Utils.java and renamed to "rescale"
 	public static Location newRescale(Location head, Location entity, double viewDistance) {
 		Vector difference = entity.subtract(head).toVector();
 		difference.normalize().multiply(viewDistance);
