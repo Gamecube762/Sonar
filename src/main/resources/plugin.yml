@@ -1,7 +1,7 @@
 name: Sonar
 main: com.github.Gamecube762.Sonar.Main
 author: Gamecube762
-version: 0.0.1
+version: 0.0.2
 prefix: Sonar
 commands:
    sonar:

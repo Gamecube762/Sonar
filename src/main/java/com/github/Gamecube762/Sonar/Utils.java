@@ -26,10 +26,7 @@ public class Utils {
         hostileEntities.add(EntityType.MAGMA_CUBE);
         hostileEntities.add(EntityType.SLIME);
 
-        if (hostileEntities.contains(entity.getType()))
-            return true;
-
-        return (entity instanceof Monster);
+        return hostileEntities.contains(entity.getType()) || (entity instanceof Monster);
     }
 
     public static Location getEntityCenter(LivingEntity entity) {
@@ -45,9 +42,7 @@ public class Utils {
         Vector difference = entity.subtract(head).toVector();
         difference.normalize().multiply(viewDistance);
 
-        Location particle = head.clone().add(difference);
-
-        return particle;
+        return head.clone().add(difference);
     }
 
 }

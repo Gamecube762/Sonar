@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -25,7 +26,7 @@ import com.darkblade12.particleeffect.ParticleEffect;
 
 /**
  * Created by Gamecube762 on 5/11/14.
- */     //Possible Todo: make it optional to show all living_ents as one effect OR make effects customizable for living_ent types(animal, monster, player)
+ */
 public class Main extends JavaPlugin implements Listener {
 	
 	int refresh, warningParticleAmount;
@@ -54,35 +55,44 @@ public class Main extends JavaPlugin implements Listener {
                         SonarList.remove(s);
                         continue;
                     }
-					
-					if (Utils.areMonstersNearby(player, warningDistance))
-						showWarningParticles(player, warningParticleAmount, viewDistance);
-					
-                    if (!player.hasPermission("sonar.noDarkness")) {
-                        player.removePotionEffect(PotionEffectType.BLINDNESS);
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 20, 0)); //+20 because the effect fades out in the last second
 
-                        player.removePotionEffect(PotionEffectType.SLOW);
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 20, 2));
-                    }
-					
-					for (Entity entity : player.getNearbyEntities(searchDistance, searchDistance, searchDistance))
-						if (entity instanceof LivingEntity) {
-
-                            Location dl = (d) ? Utils.getEntityCenter((LivingEntity)entity) : entity.getLocation();
-
-                            Location location = (a) ? newRescale(player.getEyeLocation(), dl, viewDistance) : rescale(player.getEyeLocation(), dl, searchDistance, viewDistance);
-                            ParticleEffect particleEffect = (player.hasPermission("sonar.note")) ? ParticleEffect.NOTE : ParticleEffect.FLAME;
-
-                            if (b)//this method cant be compressed like above since showEffect() doesn't return anything
-                                showEffect(player, location, particleEffect);
-                            else
-                                showEffect(player, new Flame(entity, location, particleEffect) );
-                        }
+                    refreshPlayer(player, !player.hasPermission("sonar.noDarkness") );
 				}
 			}
 		}, 1, refresh);
 	}
+
+    //Added to help prevent the player from needing to wait for the next refresh cycle
+    public void refreshPlayer(Player player, boolean showEffects) {
+        if (Utils.areMonstersNearby(player, warningDistance))
+            showWarningParticles(player, warningParticleAmount, viewDistance);
+
+        if (showEffects) {
+            player.removePotionEffect(PotionEffectType.BLINDNESS);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, refresh + 30, 0)); //+30 because the effect was fading just before the next refresh
+
+            player.removePotionEffect(PotionEffectType.SLOW);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, refresh + 30, 5));
+
+            player.removePotionEffect(PotionEffectType.JUMP);//Adding Negative Jump Boost for players using jumps to bypass slowness
+            player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, refresh + 30, 128)); //Passing 127 on byte is like passing 0 when going down
+        }
+
+        for (Entity entity : player.getNearbyEntities(searchDistance, searchDistance, searchDistance))
+            if (entity instanceof LivingEntity) {
+
+                Location dl = (d) ? Utils.getEntityCenter((LivingEntity)entity) : entity.getLocation();
+
+                Location location = Utils.rescale(player.getEyeLocation(), dl, viewDistance);
+
+                ParticleEffect particleEffect = (player.hasPermission("sonar.note")) ? ParticleEffect.NOTE : ParticleEffect.FLAME;
+
+                if (b)//this method cant be compressed like above since showEffect() doesn't return anything
+                    showEffect(player, location, particleEffect);
+                else
+                    showEffect(player, new Flame(entity, location, particleEffect) );
+            }
+    }
 	
 	@Override
 	public void onDisable() {
@@ -97,8 +107,13 @@ public class Main extends JavaPlugin implements Listener {
 		}
 	}
 
+    public void onDisconnect(PlayerQuitEvent e) {
+        sonarOff(e.getPlayer());
+    }
+
     private boolean
-            a = true,// a = Math Method Toggle | default newRescale
+            debug = false,
+            //a = true,
             b = true,// b = between using new flame class or skipping
             c = true,// c = Use if methods or switch methods for showEffect()
 	        d = true;// d = try to center the flame on entity(if not, flame appears at the feet)
@@ -108,14 +123,15 @@ public class Main extends JavaPlugin implements Listener {
             try {
                 if (args[0].equalsIgnoreCase("on"))       sonarOn(((Player) sender));
                 else if (args[0].equalsIgnoreCase("off")) sonarOff(((Player) sender));
-                else if (args[0].equalsIgnoreCase("a"))   sender.sendMessage("" + a);
-                else if (args[0].equalsIgnoreCase("as"))  a = !a;
-                else if (args[0].equalsIgnoreCase("b"))   sender.sendMessage("" + b);
-                else if (args[0].equalsIgnoreCase("bs"))  b = !b;
-                else if (args[0].equalsIgnoreCase("c"))   sender.sendMessage("" + c);
-                else if (args[0].equalsIgnoreCase("cs"))  c = !c;
-                else if (args[0].equalsIgnoreCase("d"))   sender.sendMessage("" + d);
-                else if (args[0].equalsIgnoreCase("ds"))  d = !d;
+
+                //else if (args[0].equalsIgnoreCase("a") && debug)   sender.sendMessage("" + a);
+                //else if (args[0].equalsIgnoreCase("as") && debug)  a = !a;
+                else if (args[0].equalsIgnoreCase("b") && debug)   sender.sendMessage("" + b);
+                else if (args[0].equalsIgnoreCase("bs") && debug)  b = !b;
+                else if (args[0].equalsIgnoreCase("c") && debug)   sender.sendMessage("" + c);
+                else if (args[0].equalsIgnoreCase("cs") && debug)  c = !c;
+                else if (args[0].equalsIgnoreCase("d") && debug)   sender.sendMessage("" + d);
+                else if (args[0].equalsIgnoreCase("ds") && debug)  d = !d;
                 else sender.sendMessage("Unknown Argument!");
                 return true;
             } catch (ArrayIndexOutOfBoundsException e) {}
@@ -133,10 +149,17 @@ public class Main extends JavaPlugin implements Listener {
 		String s = player.getName();
 		if (!SonarList.contains(s))
 			SonarList.add(s);
+        refreshPlayer(player, !player.hasPermission("sonar.noDarkness"));
 	}
 	
 	public void sonarOff(Player player) {
 		SonarList.remove(player.getName());
+
+        if (!player.hasPermission("sonar.noDarkness")) {
+            player.removePotionEffect(PotionEffectType.BLINDNESS);
+            player.removePotionEffect(PotionEffectType.SLOW);
+            player.removePotionEffect(PotionEffectType.JUMP);
+        }
 	}
 	
 	public boolean isUsingSonar(Player player) {
@@ -182,7 +205,6 @@ public class Main extends JavaPlugin implements Listener {
 
     }
 
-    //Posible idea: make amount based on distance of closest monster
     public static void showWarningParticles(Player player, int amount, double distance) {
     	for (int i = 0; i < amount; i++) {
     		Vector vec = new Vector(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5); //-0.5 because otherwise we only get vectors with positive coords
@@ -194,52 +216,6 @@ public class Main extends JavaPlugin implements Listener {
     		ParticleEffect.RED_DUST.display(loc, (float)0, (float)0, (float)0, (float)0, 1, player);
     	}
     }
-
-    @Deprecated //Moving to Utils.java
-    public static boolean areMonstersNearby(Player player, double radius) {
-    	for (Entity entity : player.getNearbyEntities(radius, radius, radius))
-    		if (isMonster(entity))
-    			return true;
-    	
-    	return false;
-    }
-
-    @Deprecated //Moving to Utils.java
-    public static boolean isMonster(Entity entity) {
-        List<EntityType> hostileEntities = new ArrayList<EntityType>();
-    	hostileEntities.add(EntityType.GHAST);
-    	hostileEntities.add(EntityType.MAGMA_CUBE);
-    	hostileEntities.add(EntityType.SLIME); //These entities don't extend Monster so we have to check for them manually
-    	
-    	if (hostileEntities.contains(entity.getType()))
-    		return true;
-    	
-    	return (entity instanceof Monster);//Should be cleaner and work with new monsters in future updates.
-    }
-
-    @Deprecated //Being removed
-	public static Location rescale(Location center, Location point, Double initialSize, Double newSize) {
-		double distanceX = center.getX() - point.getX();
-		double distanceY = center.getY() - point.getY();
-		double distanceZ = center.getZ() - point.getZ();
-		double SizeScale = initialSize / newSize;
-		
-		double newX = center.getX() - (distanceX / SizeScale);
-		double newY = center.getY() - (distanceY / SizeScale);
-		double newZ = center.getZ() - (distanceZ / SizeScale);
-		
-		return new Location(center.getWorld(), newX, newY, newZ);
-	}
-
-    @Deprecated //Moving to Utils.java and renamed to "rescale"
-	public static Location newRescale(Location head, Location entity, double viewDistance) {
-		Vector difference = entity.subtract(head).toVector();
-		difference.normalize().multiply(viewDistance);
-		
-		Location particle = head.clone().add(difference);
-		
-		return particle;
-	}
 
     protected class Flame {
         Entity entity;
