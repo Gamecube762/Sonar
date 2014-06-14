@@ -1,6 +1,7 @@
 package com.github.Gamecube762.Sonar;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -49,10 +50,10 @@ public class Main extends JavaPlugin implements Listener {
 		
 		Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
 			public void run() {
-				for (String s : SonarList) {
-					Player player = Bukkit.getPlayer(s);
+				for (Iterator<String> iterator = SonarList.iterator(); iterator.hasNext();) {
+					Player player = Bukkit.getPlayer(iterator.next());
                     if (player == null) {
-                        SonarList.remove(s);
+                        iterator.remove();
                         continue;
                     }
 
